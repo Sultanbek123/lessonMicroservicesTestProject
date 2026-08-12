@@ -38,13 +38,17 @@ func (h *OrderHandler) HandleOrders(w http.ResponseWriter, r *http.Request) erro
 	}
 
 	if r.Method == http.MethodPost {
+		jwtCookie, err := r.Cookie("jwt")
+		if err != nil {
+			return &AppError{Err: err, Message: "не аутентицирован", StatusCode: http.StatusUnauthorized}
+		}
 		var req dto.CreateOrderRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 			return &AppError{Err: err, Message: "неверный формат данных", StatusCode: http.StatusBadRequest}
 		}
 		defer r.Body.Close()
 
-		resp, err := h.svc.CreateOrder(ctx, userID, req)
+		resp, err := h.svc.CreateOrder(ctx, userID, jwtCookie, req)
 		if err != nil {
 			return &AppError{Err: err, Message: "внутренняя ошибка сервера", StatusCode: http.StatusInternalServerError}
 		}

@@ -5,15 +5,16 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"order-service/internal/client"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 
 	"order-service/internal/handler"
 	"order-service/internal/middleware"
@@ -51,8 +52,10 @@ func main() {
 	// Run Migrations
 	runMigrations(db, "file://migrations")
 
+	productClient := client.NewProductClient("http://localhost:8080")
+
 	repo := repository.NewOrderRepository(db)
-	svc := service.NewOrderService(repo)
+	svc := service.NewOrderService(repo, productClient)
 	h := handler.NewOrderHandler(svc)
 
 	authService := service.NewAuthService(jwtSecret)
