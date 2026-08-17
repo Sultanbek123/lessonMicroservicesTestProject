@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"order-service/internal/client"
+	"order-service/internal/kafka"
 	"os"
 	"os/signal"
 	"syscall"
@@ -55,7 +56,11 @@ func main() {
 	productClient := client.NewProductClient("http://localhost:8080")
 
 	repo := repository.NewOrderRepository(db)
-	svc := service.NewOrderService(repo, productClient)
+
+	brokers := "localhost:9092"
+	orderProducer := kafka.NewOrderProducer([]string{brokers}, "")
+
+	svc := service.NewOrderService(repo, productClient, orderProducer)
 	h := handler.NewOrderHandler(svc)
 
 	authService := service.NewAuthService(jwtSecret)
